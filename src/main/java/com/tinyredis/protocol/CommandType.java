@@ -5,6 +5,4 @@ public enum CommandType {
     SET,
     DEL,
     EXISTS,
-    EXPIRE,
-    TTL
 }
