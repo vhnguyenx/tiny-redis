@@ -27,7 +27,7 @@ public class TinyRedisEngine {
 
         store.set(key, value);
 
-        return new EngineResult(value);
+        return EngineResult.success();
     }
 
     private EngineResult executeGet(Command command) {
@@ -36,25 +36,21 @@ public class TinyRedisEngine {
         Value value = store.get(key);
 
         if (value == null) {
-            return new EngineResult(new Value(ValueType.STRING, null));
+            return EngineResult.missing();
         }
 
-        return new EngineResult(value);
+        return EngineResult.value(value);
     }
 
     private EngineResult executeDelete(Command command) {
         String key = command.getArguments().get(0);
 
-        Value value = new Value(ValueType.BOOLEAN, store.delete(key));
-
-        return new EngineResult(value);
+        return EngineResult.integer(store.delete(key) ? 1 : 0);
     }
 
     private EngineResult executeExists(Command command) {
         String key = command.getArguments().get(0);
 
-        Value value = new Value(ValueType.BOOLEAN, store.contains(key));
-
-        return new EngineResult(value);
+        return EngineResult.integer(store.contains(key) ? 1 : 0);
     }
 }

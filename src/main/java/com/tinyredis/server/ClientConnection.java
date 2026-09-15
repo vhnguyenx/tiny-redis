@@ -29,6 +29,10 @@ public class ClientConnection {
         return Arrays.copyOf(buffer, bytesRead);
     }
 
+    public InputStream getInputStream() {
+        return input;
+    }
+
     public void write(byte[] data) throws IOException {
         output.write(data);
     }

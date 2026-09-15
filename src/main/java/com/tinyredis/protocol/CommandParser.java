@@ -73,7 +73,7 @@ public class CommandParser {
             if (current == '\r') {
                 int next = input.read();
 
-                if (current == -1) {
+                if (next == -1) {
                     throw new IOException("Unexpected end of stream");
                 }
 
