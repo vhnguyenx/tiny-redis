@@ -29,6 +29,36 @@ TinyRedis
 
 ---
 
+## ⚡ Performance & Cloud Benchmark
+
+`TinyRedis v1.0.0` was evaluated under severe End-to-End (E2E) remote cloud stress testing across WAN Internet targeting an **AWS EC2 Compute-Optimized Instance (`c7i-flex.large`)**.
+
+```text
+========================================================================================
+ REMOTE E2E BENCHMARK TOPOLOGY (Laptop -> WAN Internet -> AWS EC2)
+ ┌─────────────────────────┐   WAN Internet (Public IP)   ┌─────────────────────────────┐
+ │  Local Laptop           │ ───────────────────────────► │  AWS EC2 Server             │
+ │  (Remote Test Runner)   │    Custom TCP Port 6379       │  (c7i-flex.large)           │
+ │  JUnit 5 Benchmark Tool │  RTT: 30ms - 100ms          │  Ubuntu 24.04 LTS / Java 21 │
+ └─────────────────────────┘                              └─────────────────────────────┘
+========================================================================================
+```
+
+### 📊 Benchmark Summary Table
+
+| Test Level | Concurrent Clients | Total Operations | Success Rate | Attempted Throughput | Successful Throughput | Median Latency (P50) | Tail Latency (P99) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Level 1** | 30 clients | 60,000 | **100.00%** | 2,388 QPS | 2,388 QPS | 11.89 ms | 34.12 ms |
+| **Level 2** | 200 clients | 1,000,000 | **100.00%** | 5,521 QPS | 5,521 QPS | 26.91 ms | 118.50 ms |
+| **Level 3** | 500 clients | 2,500,000 | **100.00%** | 10,803 QPS | 10,803 QPS | 34.81 ms | 210.45 ms |
+| **Level 4** | **1,000 clients** | **5,000,000** | **100.00%** | ⚡ **16,660 QPS** | ⚡ **16,660 QPS** | 45.89 ms | 295.40 ms |
+| **Level 5** | 50 clients (500KB) | 200,000 | ❌ **3.71%** | 1,314 QPS | 48.79 QPS | 212.80 ms | 3,205.80 ms |
+
+> 📖 **Full Engineering Report**: Read the complete breaking-point analysis, RCA, and latency percentiles in [BENCHMARK_REPORT.md](BENCHMARK_REPORT.md).
+
+---
+
+
 ## Quick Start
 
 ### Prerequisites
@@ -71,11 +101,11 @@ mvn exec:java -pl tinyredis-cli
 ## Example
 
 ```text
-tiny-redis:6379> SET name Nguyen
+tiny-redis:6379> SET name JohnDoe
 OK
 
 tiny-redis:6379> GET name
-Nguyen
+JohnDoe
 
 tiny-redis:6379> EXISTS name
 1
