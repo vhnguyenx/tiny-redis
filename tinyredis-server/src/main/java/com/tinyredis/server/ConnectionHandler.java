@@ -47,7 +47,11 @@ public class ConnectionHandler {
                 connection.write(response);
             }
         } catch (IOException e) {
-            logger.error("Client connection closed or I/O failed", e);
+            if ("Unexpected end of stream".equals(e.getMessage())) {
+                logger.info("Client disconnected cleanly");
+            } else {
+                logger.error("Client connection error", e);
+            }
         } finally {
             try {
                 connection.close();
