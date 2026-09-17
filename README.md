@@ -31,28 +31,36 @@ TinyRedis
 
 ## ⚡ Performance & Cloud Benchmark
 
-`TinyRedis v1.0.0` was evaluated under severe End-to-End (E2E) remote cloud stress testing across WAN Internet targeting an **AWS EC2 Compute-Optimized Instance (`c7i-flex.large`)**.
+`TinyRedis v1.0.0` was evaluated under End-to-End (E2E) cloud benchmarks on **AWS EC2 (`c7i-flex.large`)** across both WAN Internet and Intra-VPC high-speed networks.
 
-```text
-========================================================================================
- REMOTE E2E BENCHMARK TOPOLOGY (Laptop -> WAN Internet -> AWS EC2)
- ┌─────────────────────────┐   WAN Internet (Public IP)   ┌─────────────────────────────┐
- │  Local Laptop           │ ───────────────────────────► │  AWS EC2 Server             │
- │  (Remote Test Runner)   │    Custom TCP Port 6379       │  (c7i-flex.large)           │
- │  JUnit 5 Benchmark Tool │  RTT: 30ms - 100ms          │  Ubuntu 24.04 LTS / Java 21 │
- └─────────────────────────┘                              └─────────────────────────────┘
-========================================================================================
-```
+### 🚀 Scenario 2: Intra-VPC High-Speed Benchmark (AWS Private Network)
 
-### 📊 Benchmark Summary Table
+| Test Level | Concurrent Clients | Total Operations | Success Rate | Attempted QPS | Successful QPS | Median Latency (P50) | P99 Tail Latency |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Level 1** | 30 clients | 60,000 | **100.00%** | 33,727 QPS | 33,727 QPS | ⚡ **0.63 ms** | 3.24 ms |
+| **Level 2** | 200 clients | 1,000,000 | **100.00%** | 🚀 **49,439 QPS** | 🚀 **49,439 QPS** | **2.82 ms** | 17.82 ms |
+| **Level 3** | 500 clients | 2,500,000 | **100.00%** | 47,609 QPS | 47,609 QPS | 6.10 ms | 50.95 ms |
+| **Level 4** | **1,000 clients** | **5,000,000** | **100.00%** | ⚡ **48,985 QPS** | ⚡ **48,985 QPS** | 9.46 ms | 110.56 ms |
+| **Level 5** | 50 clients (500KB) | 200,000 | ❌ **1.89%** | 12,872 QPS | 243 QPS | 29.00 ms | 255.89 ms |
 
-| Test Level | Concurrent Clients | Total Operations | Success Rate | Attempted Throughput | Successful Throughput | Median Latency (P50) | Tail Latency (P99) |
+### 🌐 Scenario 1: Remote WAN Internet Benchmark (Public IP)
+
+| Test Level | Concurrent Clients | Total Operations | Success Rate | Attempted QPS | Successful QPS | Median Latency (P50) | P99 Tail Latency |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Level 1** | 30 clients | 60,000 | **100.00%** | 2,388 QPS | 2,388 QPS | 11.89 ms | 34.12 ms |
 | **Level 2** | 200 clients | 1,000,000 | **100.00%** | 5,521 QPS | 5,521 QPS | 26.91 ms | 118.50 ms |
 | **Level 3** | 500 clients | 2,500,000 | **100.00%** | 10,803 QPS | 10,803 QPS | 34.81 ms | 210.45 ms |
 | **Level 4** | **1,000 clients** | **5,000,000** | **100.00%** | ⚡ **16,660 QPS** | ⚡ **16,660 QPS** | 45.89 ms | 295.40 ms |
-| **Level 5** | 50 clients (500KB) | 200,000 | ❌ **3.71%** | 1,314 QPS | 48.79 QPS | 212.80 ms | 3,205.80 ms |
+| **Level 5** | 50 clients (500KB) | 200,000 | ❌ **3.71%** | 1,314 QPS | 49 QPS | 212.80 ms | 3,205.80 ms |
+
+### ⚔️ Side-by-Side Comparison (Scenario 1 vs. Scenario 2)
+
+| Test Level | WAN Peak QPS (Scen 1) | Intra-VPC Peak QPS (Scen 2) | WAN P50 Latency | Intra-VPC P50 Latency | Speedup Factor |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Level 1 (30 Clients)** | 2,388 QPS | **33,727 QPS** | 11.89 ms | ⚡ **0.63 ms** | 🚀 **14.1x QPS** (18.9x lower P50) |
+| **Level 2 (200 Clients)** | 5,521 QPS | 🚀 **49,439 QPS** | 26.91 ms | ⚡ **2.82 ms** | 🚀 **8.95x QPS** (9.5x lower P50) |
+| **Level 3 (500 Clients)** | 10,803 QPS | **47,609 QPS** | 34.81 ms | ⚡ **6.10 ms** | 🚀 **4.41x QPS** (5.7x lower P50) |
+| **Level 4 (1,000 Clients)**| 16,660 QPS | ⚡ **48,985 QPS** | 45.89 ms | ⚡ **9.46 ms** | 🚀 **2.94x QPS** (4.8x lower P50) |
 
 > 📖 **Full Engineering Report**: Read the complete breaking-point analysis, RCA, and latency percentiles in [BENCHMARK_REPORT.md](BENCHMARK_REPORT.md).
 
