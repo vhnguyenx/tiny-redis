@@ -164,13 +164,3 @@ This technical report presents the comprehensive performance scaling, network la
 2. **LRU Eviction Engine**: Implement a configurable `maxmemory` threshold (e.g., `maxmemory 2gb`) with automatic Least Recently Used (LRU) key eviction.
 
 ---
-
-## 💎 6. Resume & Portfolio Bullet Points
-
-```text
-🚀 AWS Cloud E2E Performance Scaling & Stress Testing Highlights:
-- Evaluated E2E cloud performance across WAN Internet and AWS Intra-VPC networks on EC2 (c7i-flex.large).
-- Achieved Peak Intra-VPC Throughput of 49,439 QPS with 2.82 ms P50 latency under 200 concurrent sockets (1,000,000 ops, 100% success rate).
-- Sustained ~49,000 QPS across 1,000 concurrent client threads processing 5,000,000 operations with ZERO connection drops.
-- Conducted Breaking Point Memory Stress Testing with 500KB heavy payloads, identifying JVM heap exhaustion boundaries (java.lang.OutOfMemoryError) and establishing baseline specifications for v1.1.0 LRU eviction engine.
-```
