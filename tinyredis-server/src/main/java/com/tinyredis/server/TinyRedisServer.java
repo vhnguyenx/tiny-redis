@@ -3,6 +3,7 @@ package com.tinyredis.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +15,8 @@ import com.tinyredis.protocol.ResponseEncoder;
 
 public class TinyRedisServer {
     private final ServerSocket serverSocket;
-   
+    private volatile boolean running = true;
+
     private final KeyValueStore keyValueStore;
     private final TinyRedisEngine tinyRedisEngine;
     private final ResponseEncoder responseEncoder;
@@ -26,7 +28,7 @@ public class TinyRedisServer {
 
     public TinyRedisServer(int port) throws IOException {
         this.serverSocket = new ServerSocket(port);
-      
+
         this.keyValueStore = new KeyValueStore();
         this.tinyRedisEngine = new TinyRedisEngine(keyValueStore);
         this.responseEncoder = new ResponseEncoder();
@@ -35,19 +37,38 @@ public class TinyRedisServer {
         this.responseMapper = new ResponseMapper();
     }
 
+    public int getPort() {
+        return serverSocket.getLocalPort();
+    }
+
     public void start() throws IOException {
-        while (true) {
-            Socket socket = serverSocket.accept();
+        while (running && !serverSocket.isClosed()) {
+            try {
+                Socket socket = serverSocket.accept();
 
-            logger.info("Client connected: {}", socket.getRemoteSocketAddress());
+                logger.info("Client connected: {}", socket.getRemoteSocketAddress());
 
-            ClientConnection connection = new ClientConnection(socket);
+                ClientConnection connection = new ClientConnection(socket);
                 ConnectionHandler handler = new ConnectionHandler(connection, commandParser, tinyRedisEngine,
-                    commandMapper, responseMapper, responseEncoder);
+                        commandMapper, responseMapper, responseEncoder);
 
-            Thread thread = new Thread(() -> handler.handle());
+                Thread thread = new Thread(() -> handler.handle());
 
-            thread.start();
+                thread.start();
+            } catch (SocketException e) {
+                if (!running || serverSocket.isClosed()) {
+                    logger.info("Server socket closed, stopping server loop.");
+                    break;
+                }
+                throw e;
+            }
+        }
+    }
+
+    public void stop() throws IOException {
+        running = false;
+        if (!serverSocket.isClosed()) {
+            serverSocket.close();
         }
     }
 }

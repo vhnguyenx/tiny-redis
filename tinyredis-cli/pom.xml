@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.tinyredis</groupId>
         <artifactId>tinyredis</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
 
     <artifactId>tinyredis-cli</artifactId>
@@ -17,6 +17,22 @@
             <groupId>com.tinyredis</groupId>
             <artifactId>tinyredis-protocol</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tinyredis</groupId>
+            <artifactId>tinyredis-server</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

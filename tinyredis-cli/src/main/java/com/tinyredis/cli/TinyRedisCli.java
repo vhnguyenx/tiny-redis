@@ -26,7 +26,7 @@ public final class TinyRedisCli {
                 BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
                 OutputStream output = socket.getOutputStream()) {
             while (true) {
-                System.out.print(host + ":" + port + "> ");
+                System.out.print("tiny-redis:" + port + "> ");
                 String line = console.readLine();
                 if (line == null || line.equalsIgnoreCase("quit")) {
                     break;
