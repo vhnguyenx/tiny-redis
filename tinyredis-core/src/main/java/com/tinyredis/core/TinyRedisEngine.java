@@ -23,7 +23,7 @@ public class TinyRedisEngine {
 
         Value value = new Value(ValueType.STRING, data);
 
-        store.set(key, value);
+        store.set(key, new Entry(value));
 
         return EngineResult.success();
     }
@@ -31,13 +31,13 @@ public class TinyRedisEngine {
     private EngineResult executeGet(Operation operation) {
         String key = operation.getArguments().get(0);
 
-        Value value = store.get(key);
+        Entry entry = store.get(key);
 
-        if (value == null) {
+        if (entry == null) {
             return EngineResult.missing();
         }
 
-        return EngineResult.value(value);
+        return EngineResult.value(entry.getValue());
     }
 
     private EngineResult executeDelete(Operation operation) {

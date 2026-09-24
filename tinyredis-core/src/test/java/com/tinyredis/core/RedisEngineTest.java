@@ -18,8 +18,8 @@ public class RedisEngineTest {
 
         assertEquals(ResultType.SUCCESS, result.getType());
         assertNull(result.getData());
-        assertEquals(ValueType.STRING, store.get("name").getType());
-        assertEquals("tinyredis", store.get("name").getData());
+        assertEquals(ValueType.STRING, store.get("name").getValue().getType());
+        assertEquals("tinyredis", store.get("name").getValue().getData());
     }
 
     @Test
@@ -32,14 +32,14 @@ public class RedisEngineTest {
 
         assertEquals(ResultType.SUCCESS, result.getType());
         assertNull(result.getData());
-        assertEquals("new", store.get("name").getData());
+        assertEquals("new", store.get("name").getValue().getData());
     }
 
     @Test
     void executeGetReturnsExistingValue() {
         KeyValueStore store = new KeyValueStore();
         TinyRedisEngine engine = new TinyRedisEngine(store);
-        store.set("name", new Value(ValueType.STRING, "tinyredis"));
+        store.set("name", new Entry(new Value(ValueType.STRING, "tinyredis")));
 
         EngineResult result = engine.execute(operation(OperationType.GET, "name"));
 
@@ -63,7 +63,7 @@ public class RedisEngineTest {
     void executeDeleteRemovesExistingKeyAndReturnsTrue() {
         KeyValueStore store = new KeyValueStore();
         TinyRedisEngine engine = new TinyRedisEngine(store);
-        store.set("name", new Value(ValueType.STRING, "tinyredis"));
+        store.set("name", new Entry(new Value(ValueType.STRING, "tinyredis")));
 
         EngineResult result = engine.execute(operation(OperationType.DEL, "name"));
 
@@ -86,7 +86,7 @@ public class RedisEngineTest {
     void executeExistsReturnsTrueWhenKeyExists() {
         KeyValueStore store = new KeyValueStore();
         TinyRedisEngine engine = new TinyRedisEngine(store);
-        store.set("name", new Value(ValueType.STRING, "tinyredis"));
+        store.set("name", new Entry(new Value(ValueType.STRING, "tinyredis")));
 
         EngineResult result = engine.execute(operation(OperationType.EXISTS, "name"));
 
