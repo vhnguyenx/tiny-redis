@@ -4,17 +4,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class KeyValueStore {
-    private final ConcurrentMap<String, Value> store;
+    private final ConcurrentMap<String, Entry> store;
 
     public KeyValueStore() {
         this.store = new ConcurrentHashMap<>();
     }
 
-    public void set(String key, Value value) {
+    public void set(String key, Entry value) {
         store.put(key, value);
     }
 
-    public Value get(String key) {
+    public Entry get(String key) {
         return store.get(key);
     }
 

@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import com.tinyredis.core.KeyValueStore;
 import com.tinyredis.core.TinyRedisEngine;
+import com.tinyredis.expiration.ExpirationManager;
+import com.tinyredis.expiration.SystemTimeSource;
 import com.tinyredis.protocol.CommandParser;
 import com.tinyredis.protocol.ResponseEncoder;
 
@@ -18,6 +20,7 @@ public class TinyRedisServer {
     private volatile boolean running = true;
 
     private final KeyValueStore keyValueStore;
+    private final ExpirationManager expirationManager;
     private final TinyRedisEngine tinyRedisEngine;
     private final ResponseEncoder responseEncoder;
     private final CommandParser commandParser;
@@ -30,7 +33,8 @@ public class TinyRedisServer {
         this.serverSocket = new ServerSocket(port);
 
         this.keyValueStore = new KeyValueStore();
-        this.tinyRedisEngine = new TinyRedisEngine(keyValueStore);
+        this.expirationManager = new ExpirationManager(this.keyValueStore);
+        this.tinyRedisEngine = new TinyRedisEngine(this.keyValueStore, this.expirationManager, new SystemTimeSource());
         this.responseEncoder = new ResponseEncoder();
         this.commandParser = new CommandParser();
         this.commandMapper = new CommandMapper();
@@ -42,6 +46,7 @@ public class TinyRedisServer {
     }
 
     public void start() throws IOException {
+        this.expirationManager.start();
         while (running && !serverSocket.isClosed()) {
             try {
                 Socket socket = serverSocket.accept();
@@ -67,6 +72,7 @@ public class TinyRedisServer {
 
     public void stop() throws IOException {
         running = false;
+        this.expirationManager.stop();
         if (!serverSocket.isClosed()) {
             serverSocket.close();
         }

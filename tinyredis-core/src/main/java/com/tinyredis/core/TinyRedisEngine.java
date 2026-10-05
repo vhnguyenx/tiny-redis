@@ -1,11 +1,22 @@
 package com.tinyredis.core;
 
+import com.tinyredis.expiration.ExpirationManager;
+import com.tinyredis.expiration.SystemTimeSource;
+
 public class TinyRedisEngine {
 
     private final KeyValueStore store;
+    private final ExpirationManager expirationManager;
+    private final SystemTimeSource timeSource;
 
     public TinyRedisEngine(KeyValueStore store) {
+        this(store, new ExpirationManager(store), new SystemTimeSource());
+    }
+
+    public TinyRedisEngine(KeyValueStore store, ExpirationManager expirationManager, SystemTimeSource timeSource) {
         this.store = store;
+        this.expirationManager = expirationManager;
+        this.timeSource = timeSource;
     }
 
     public EngineResult execute(Operation operation) {
@@ -18,12 +29,30 @@ public class TinyRedisEngine {
     }
 
     private EngineResult executeSet(Operation operation) {
-        String key = operation.getArguments().get(0);
-        String data = operation.getArguments().get(1);
+        java.util.List<String> args = operation.getArguments();
+        String key = args.get(0);
+        String data = args.get(1);
+
+        long expireAt = -1;
+
+        for (int i = 2; i < args.size(); i++) {
+            String arg = args.get(i).toUpperCase();
+            if (arg.equals("EX") && i + 1 < args.size()) {
+                long seconds = Long.parseLong(args.get(++i));
+                expireAt = timeSource.now() + (seconds * 1000);
+            } else if (arg.equals("PX") && i + 1 < args.size()) {
+                long milliseconds = Long.parseLong(args.get(++i));
+                expireAt = timeSource.now() + milliseconds;
+            }
+        }
 
         Value value = new Value(ValueType.STRING, data);
 
-        store.set(key, value);
+        store.set(key, new Entry(value, expireAt));
+        
+        if (expireAt != -1) {
+            expirationManager.register(key, expireAt);
+        }
 
         return EngineResult.success();
     }
@@ -31,13 +60,18 @@ public class TinyRedisEngine {
     private EngineResult executeGet(Operation operation) {
         String key = operation.getArguments().get(0);
 
-        Value value = store.get(key);
+        Entry entry = store.get(key);
 
-        if (value == null) {
+        if (entry == null) {
             return EngineResult.missing();
         }
 
-        return EngineResult.value(value);
+        if (entry.getExpireAt() > 0 && entry.getExpireAt() <= timeSource.now()) {
+            store.delete(key);
+            return EngineResult.missing();
+        }
+
+        return EngineResult.value(entry.getValue());
     }
 
     private EngineResult executeDelete(Operation operation) {
@@ -48,7 +82,17 @@ public class TinyRedisEngine {
 
     private EngineResult executeExists(Operation operation) {
         String key = operation.getArguments().get(0);
+        
+        Entry entry = store.get(key);
+        if (entry == null) {
+            return EngineResult.integer(0);
+        }
 
-        return EngineResult.integer(store.contains(key) ? 1 : 0);
+        if (entry.getExpireAt() > 0 && entry.getExpireAt() <= timeSource.now()) {
+            store.delete(key);
+            return EngineResult.integer(0);
+        }
+
+        return EngineResult.integer(1);
     }
 }

@@ -130,8 +130,8 @@ class ConnectionHandlerTest {
 
         handler.handle();
 
-        assertEquals(ValueType.STRING, store.get("name").getType());
-        assertEquals("tinyredis", store.get("name").getData());
+        assertEquals(ValueType.STRING, store.get("name").getValue().getType());
+        assertEquals("tinyredis", store.get("name").getValue().getData());
 
         ArgumentCaptor<byte[]> responseCaptor = ArgumentCaptor.forClass(byte[].class);
         verify(connection, org.mockito.Mockito.times(2)).write(responseCaptor.capture());
