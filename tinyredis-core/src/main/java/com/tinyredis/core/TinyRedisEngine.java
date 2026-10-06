@@ -2,21 +2,31 @@ package com.tinyredis.core;
 
 import com.tinyredis.expiration.ExpirationManager;
 import com.tinyredis.expiration.SystemTimeSource;
+import com.tinyredis.eviction.EvictionManager;
+import com.tinyredis.eviction.MemoryMonitor;
 
 public class TinyRedisEngine {
 
     private final KeyValueStore store;
     private final ExpirationManager expirationManager;
     private final SystemTimeSource timeSource;
+    private final EvictionManager evictionManager;
+    private final MemoryMonitor memoryMonitor;
 
     public TinyRedisEngine(KeyValueStore store) {
         this(store, new ExpirationManager(store), new SystemTimeSource());
     }
 
     public TinyRedisEngine(KeyValueStore store, ExpirationManager expirationManager, SystemTimeSource timeSource) {
+        this(store, expirationManager, timeSource, new EvictionManager(), new MemoryMonitor((long) (Runtime.getRuntime().maxMemory() * 0.8)));
+    }
+
+    public TinyRedisEngine(KeyValueStore store, ExpirationManager expirationManager, SystemTimeSource timeSource, EvictionManager evictionManager, MemoryMonitor memoryMonitor) {
         this.store = store;
         this.expirationManager = expirationManager;
         this.timeSource = timeSource;
+        this.evictionManager = evictionManager;
+        this.memoryMonitor = memoryMonitor;
     }
 
     public EngineResult execute(Operation operation) {
@@ -48,11 +58,18 @@ public class TinyRedisEngine {
 
         Value value = new Value(ValueType.STRING, data);
 
+        while (memoryMonitor.isOverLimit() && evictionManager.size() > 0) {
+            String victimKey = evictionManager.evict();
+            store.delete(victimKey);
+        }
+
         store.set(key, new Entry(value, expireAt));
         
         if (expireAt != -1) {
             expirationManager.register(key, expireAt);
         }
+
+        evictionManager.onInsert(key);
 
         return EngineResult.success();
     }
@@ -68,8 +85,11 @@ public class TinyRedisEngine {
 
         if (entry.getExpireAt() > 0 && entry.getExpireAt() <= timeSource.now()) {
             store.delete(key);
+            evictionManager.onRemove(key);
             return EngineResult.missing();
         }
+
+        evictionManager.onAccess(key);
 
         return EngineResult.value(entry.getValue());
     }
@@ -77,7 +97,12 @@ public class TinyRedisEngine {
     private EngineResult executeDelete(Operation operation) {
         String key = operation.getArguments().get(0);
 
-        return EngineResult.integer(store.delete(key) ? 1 : 0);
+        boolean deleted = store.delete(key);
+        if (deleted) {
+            evictionManager.onRemove(key);
+        }
+
+        return EngineResult.integer(deleted ? 1 : 0);
     }
 
     private EngineResult executeExists(Operation operation) {
@@ -90,8 +115,11 @@ public class TinyRedisEngine {
 
         if (entry.getExpireAt() > 0 && entry.getExpireAt() <= timeSource.now()) {
             store.delete(key);
+            evictionManager.onRemove(key);
             return EngineResult.integer(0);
         }
+
+        evictionManager.onAccess(key);
 
         return EngineResult.integer(1);
     }

@@ -199,6 +199,64 @@ public class RedisEngineTest {
         assertEquals(false, store.contains("name"));
     }
 
+    @Test
+    void executeSetEvictsWhenOverMemoryLimit() {
+        KeyValueStore store = new KeyValueStore();
+        com.tinyredis.eviction.EvictionManager evManager = new com.tinyredis.eviction.EvictionManager();
+        com.tinyredis.eviction.MemoryMonitor fakeMemoryMonitor = new com.tinyredis.eviction.MemoryMonitor(1024) {
+            @Override
+            public boolean isOverLimit() {
+                // Force eviction when there are 2 or more items
+                return evManager.size() >= 2;
+            }
+        };
+
+        com.tinyredis.expiration.SystemTimeSource timeSource = new com.tinyredis.expiration.SystemTimeSource();
+        com.tinyredis.expiration.ExpirationManager expManager = new com.tinyredis.expiration.ExpirationManager(store);
+        
+        TinyRedisEngine engine = new TinyRedisEngine(store, expManager, timeSource, evManager, fakeMemoryMonitor);
+
+        engine.execute(operation(OperationType.SET, "key1", "val1"));
+        engine.execute(operation(OperationType.SET, "key2", "val2"));
+        
+        // Adding 3rd key should trigger eviction of key1 (LRU)
+        engine.execute(operation(OperationType.SET, "key3", "val3"));
+        
+        assertEquals(false, store.contains("key1")); // Evicted
+        assertEquals(true, store.contains("key2"));
+        assertEquals(true, store.contains("key3"));
+    }
+
+    @Test
+    void executeGetUpdatesLruOrderForEviction() {
+        KeyValueStore store = new KeyValueStore();
+        com.tinyredis.eviction.EvictionManager evManager = new com.tinyredis.eviction.EvictionManager();
+        com.tinyredis.eviction.MemoryMonitor fakeMemoryMonitor = new com.tinyredis.eviction.MemoryMonitor(1024) {
+            @Override
+            public boolean isOverLimit() {
+                // Force eviction when there are 3 or more items
+                return evManager.size() >= 3;
+            }
+        };
+
+        TinyRedisEngine engine = new TinyRedisEngine(store, new com.tinyredis.expiration.ExpirationManager(store), new com.tinyredis.expiration.SystemTimeSource(), evManager, fakeMemoryMonitor);
+
+        engine.execute(operation(OperationType.SET, "key1", "val1"));
+        engine.execute(operation(OperationType.SET, "key2", "val2"));
+        engine.execute(operation(OperationType.SET, "key3", "val3"));
+        
+        // Access key1 to make it MRU
+        engine.execute(operation(OperationType.GET, "key1"));
+        
+        // Adding 4th key should trigger eviction of key2 (new LRU)
+        engine.execute(operation(OperationType.SET, "key4", "val4"));
+        
+        assertEquals(true, store.contains("key1")); // Preserved due to access
+        assertEquals(false, store.contains("key2")); // Evicted
+        assertEquals(true, store.contains("key3"));
+        assertEquals(true, store.contains("key4"));
+    }
+
     private static Operation operation(OperationType type, String... arguments) {
         return new Operation(type, List.of(arguments));
     }
