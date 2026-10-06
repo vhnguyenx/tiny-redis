@@ -11,6 +11,8 @@ A lightweight Redis-like in-memory key-value server implemented in pure Java.
 - **Concurrent clients**: Safe multi-client concurrency handling
 - **In-memory key-value storage**: Fast thread-safe storage engine
 - **Redis-like CLI**: Interactive command-line terminal client
+- **Time-To-Live (TTL)**: Automatic key expiration with EX/PX options
+- **Memory Management**: Inline LRU (Least Recently Used) eviction policy
 - **Basic commands**: `SET`, `GET`, `DEL`, `EXISTS`
 
 ---
@@ -31,9 +33,9 @@ TinyRedis
 
 ## ⚡ Performance & Cloud Benchmark
 
-`TinyRedis v1.0.0` was evaluated under End-to-End (E2E) cloud benchmarks on **AWS EC2 (`c7i-flex.large`)** across both WAN Internet and Intra-VPC high-speed networks.
+`TinyRedis v1.0.0` was evaluated under End-to-End (E2E) cloud benchmarks on **AWS EC2 (`c7i-flex.large`)** within an Intra-VPC high-speed network.
 
-### 🚀 Scenario 2: Intra-VPC High-Speed Benchmark (AWS Private Network)
+### 🚀 High-Speed Benchmark (AWS Private Network)
 
 | Test Level | Concurrent Clients | Total Operations | Success Rate | Attempted QPS | Successful QPS | Median Latency (P50) | P99 Tail Latency |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -42,25 +44,6 @@ TinyRedis
 | **Level 3** | 500 clients | 2,500,000 | **100.00%** | 47,609 QPS | 47,609 QPS | 6.10 ms | 50.95 ms |
 | **Level 4** | **1,000 clients** | **5,000,000** | **100.00%** | ⚡ **48,985 QPS** | ⚡ **48,985 QPS** | 9.46 ms | 110.56 ms |
 | **Level 5** | 50 clients (500KB) | 200,000 | ❌ **1.89%** | 12,872 QPS | 243 QPS | 29.00 ms | 255.89 ms |
-
-### 🌐 Scenario 1: Remote WAN Internet Benchmark (Public IP)
-
-| Test Level | Concurrent Clients | Total Operations | Success Rate | Attempted QPS | Successful QPS | Median Latency (P50) | P99 Tail Latency |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Level 1** | 30 clients | 60,000 | **100.00%** | 2,388 QPS | 2,388 QPS | 11.89 ms | 34.12 ms |
-| **Level 2** | 200 clients | 1,000,000 | **100.00%** | 5,521 QPS | 5,521 QPS | 26.91 ms | 118.50 ms |
-| **Level 3** | 500 clients | 2,500,000 | **100.00%** | 10,803 QPS | 10,803 QPS | 34.81 ms | 210.45 ms |
-| **Level 4** | **1,000 clients** | **5,000,000** | **100.00%** | ⚡ **16,660 QPS** | ⚡ **16,660 QPS** | 45.89 ms | 295.40 ms |
-| **Level 5** | 50 clients (500KB) | 200,000 | ❌ **3.71%** | 1,314 QPS | 49 QPS | 212.80 ms | 3,205.80 ms |
-
-### ⚔️ Side-by-Side Comparison (Scenario 1 vs. Scenario 2)
-
-| Test Level | WAN Peak QPS (Scen 1) | Intra-VPC Peak QPS (Scen 2) | WAN P50 Latency | Intra-VPC P50 Latency | Speedup Factor |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Level 1 (30 Clients)** | 2,388 QPS | **33,727 QPS** | 11.89 ms | ⚡ **0.63 ms** | 🚀 **14.1x QPS** (18.9x lower P50) |
-| **Level 2 (200 Clients)** | 5,521 QPS | 🚀 **49,439 QPS** | 26.91 ms | ⚡ **2.82 ms** | 🚀 **8.95x QPS** (9.5x lower P50) |
-| **Level 3 (500 Clients)** | 10,803 QPS | **47,609 QPS** | 34.81 ms | ⚡ **6.10 ms** | 🚀 **4.41x QPS** (5.7x lower P50) |
-| **Level 4 (1,000 Clients)**| 16,660 QPS | ⚡ **48,985 QPS** | 45.89 ms | ⚡ **9.46 ms** | 🚀 **2.94x QPS** (4.8x lower P50) |
 
 > 📖 **Full Engineering Report**: Read the complete breaking-point analysis, RCA, and latency percentiles in [BENCHMARK_REPORT.md](BENCHMARK_REPORT.md).
 
@@ -99,7 +82,7 @@ mvn exec:java -pl tinyredis-cli
 
 | Command  | Syntax             | Description                                     | Return Value               |
 |----------|--------------------|-------------------------------------------------|----------------------------|
-| `SET`    | `SET key value`    | Set key to hold string value                    | `OK`                       |
+| `SET`    | `SET key value [EX seconds] [PX millis]` | Set key to hold string value (with optional TTL) | `OK`                       |
 | `GET`    | `GET key`          | Get the value of key                            | Value string or `(nil)`    |
 | `EXISTS` | `EXISTS key`       | Returns if key exists                           | `1` (exists) or `0`        |
 | `DEL`    | `DEL key`          | Removes the specified key                       | `1` (deleted) or `0`       |
@@ -150,9 +133,9 @@ tiny-redis
 - In-memory KeyValueStore (`SET`, `GET`, `DEL`, `EXISTS`)
 - Interactive CLI client (`tinyredis-cli`)
 
-### v1.1
-- Expiration (TTL & MinHeap priority queue expiration engine)
-- LRU memory eviction policy
+### v1.1 (Released)
+- ✅ Expiration (TTL & MinHeap priority queue expiration engine)
+- ✅ LRU memory eviction policy
 
 ### v1.2
 - Persistence (Write-Ahead Log & Snapshot Manager)
